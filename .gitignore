@@ -7,3 +7,29 @@ test.py
 lib/lcd_api.py
 lib/pico_i2c_lcd.py
 AGENTS.md
+
+# IntelliJ IDEA - ustawienia lokalne
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/shelf/
+.idea/dictionaries/
+.idea/dataSources/
+.idea/dataSources.local.xml
+.idea/**/usage.statistics.xml
+
+# Lokalne pliki IntelliJ
+*.iml
+
+# Python / MicroPython
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# System operacyjny
+.DS_Store
+Thumbs.db
+
+# Lokalne pliki
+.env
+.env.local
