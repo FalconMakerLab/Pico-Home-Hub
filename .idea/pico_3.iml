@@ -5,6 +5,6 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="jdk" jdkName="Python 3.9" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="MicroPythonToolsStubs" level="project" />
+    <orderEntry type="library" name="MicroPythonToolsStubs" level="project" />
   </component>
 </module>
