@@ -15,9 +15,13 @@ class Wifi:
     ip: str = None
     socketOpened: socket = None
 
-    def __init__(self):
-        self._handleConnectToWiFi()
-        self.openSocket()
+    def __init__(self, stayInLoop=True):
+        self.stayInLoop = stayInLoop
+        self.wlan = None
+        self.ip = None
+        self.socketOpened = None
+        if self._handleConnectToWiFi():
+            self.openSocket()
 
     """
     Method will try to connect to WiFi network by provided data in config.py.
@@ -84,17 +88,23 @@ class Wifi:
 
     """
     Method will check WiFi connection.
-    If WiFi was lost, method will try to connect until connection will return.
-    After connection restore, method will handle socket state.
+    Retry according to stayInLoop and open the server only when connected.
     """
     def checkConnection(self):
-        if self.wlan.isconnected():
-            print("Wifi connected...")
-        else:
+        if self.wlan is None or not self.wlan.isconnected():
             print("Wifi connection lost...")
-            self._handleConnectToWiFi()
-            if not self.isSocketOpened():
-                self.openSocket()
+            if self.socketOpened is not None:
+                self.socketOpened.close()
+                self.socketOpened = None
+            self.ip = None
+            if not self._handleConnectToWiFi():
+                return False
+
+        if self.ip is None:
+            self.ip = self.wlan.ifconfig()[0]
+        if self.socketOpened is None:
+            self.openSocket()
+        return True
 
     def _handleConnectToWiFi(self):
         print("Request for handle connect to WiFi. Starting loop...")
@@ -103,7 +113,9 @@ class Wifi:
                 self.ip = self.connect()
             except Exception as ex:
                 print("Connection error {}".format(ex))
-                pass
+                if not self.stayInLoop:
+                    return False
+        return True
 
     def _delegateOpenSocket(self):
             print("Try to open socket")

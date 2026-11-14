@@ -17,15 +17,16 @@ i2c = I2C(0, scl=Pin(5), sda=Pin(4))
 oled: sh1106.SH1106 = sh1106.SH1106(i2c, 0x3c)
 lightSensor = oky16560.Oky16560()
 
-lastDisplayUpdate = 0
+lastDisplayUpdate = None
 DISPLAY_INTERVAL = 30000
+WIFI_RETRY_INTERVAL = 30000
 
 def printDataNonBlocking():
     global lastDisplayUpdate
 
     now = time.ticks_ms()
 
-    if time.ticks_diff(now, lastDisplayUpdate) >= DISPLAY_INTERVAL:
+    if lastDisplayUpdate is None or time.ticks_diff(now, lastDisplayUpdate) >= DISPLAY_INTERVAL:
         lastDisplayUpdate = now
 
         data: DHT22.DHT_Data = sensor.get_data()
@@ -102,19 +103,26 @@ def serve(wifiConnection: wifi.Wifi):
         print("OS error cached, it should be a timeout, for doing other stuffs between client requests: {}".format(e))
         pass
 
-    wifiConnection.checkConnection()
-
 # while(1):
 #     printData()
 
+wifiConnection = None
 try:
     print("Starting app...")
     gc.collect()
     time.sleep(3)
-    wifiConnection: wifi.Wifi = wifi.Wifi()
+    wifiConnection = wifi.Wifi(stayInLoop=False)
+    lastWifiCheck = time.ticks_ms()
     while True:
-        serve(wifiConnection)
         printDataNonBlocking()
+        now = time.ticks_ms()
+        if time.ticks_diff(now, lastWifiCheck) >= WIFI_RETRY_INTERVAL:
+            wifiConnection.checkConnection()
+            lastWifiCheck = time.ticks_ms()
+        if (wifiConnection.wlan is not None
+                and wifiConnection.wlan.isconnected()
+                and wifiConnection.socketOpened is not None):
+            serve(wifiConnection)
         time.sleep(0.05)
 
 except KeyboardInterrupt:
@@ -122,4 +130,5 @@ except KeyboardInterrupt:
 except Exception as e:
     print(f"An unexpected error occurred: {e}")
 finally:
-    wifiConnection.socketOpened.close()
+    if wifiConnection is not None and wifiConnection.socketOpened is not None:
+        wifiConnection.socketOpened.close()
